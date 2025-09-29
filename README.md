@@ -175,12 +175,12 @@ Sample Prompt: “How have technological advancements impacted healthcare and wh
 
 CORS_ORIGINS=http://localhost,http://localhost:3000
 RABBITMQ_USER=guest
-RABBITMQ_PASS=guest
-RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672/
-TEXT_PARSER_URL=http://text-parser-service:8001/parse
-OCR_SERVICE_URL=http://ocr-service:8002/ocr
-RAG_SERVICE_URL=http://rag-service:8003/rag/reply
-WEAVIATE_URL=http://weaviate:8080
-WEAVIATE_HOST=weaviate
-WEAVIATE_HTTP_PORT=8080
+RABBITMQ_PASS=guest  
+RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672/  
+TEXT_PARSER_URL=http://text-parser-service:8001/parse  
+OCR_SERVICE_URL=http://ocr-service:8002/ocr  
+RAG_SERVICE_URL=http://rag-service:8003/rag/reply  
+WEAVIATE_URL=http://weaviate:8080  
+WEAVIATE_HOST=weaviate  
+WEAVIATE_HTTP_PORT=8080  
 WEAVIATE_GRPC_PORT=50052
