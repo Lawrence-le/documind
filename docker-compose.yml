@@ -1,0 +1,127 @@
+
+# docker-compose up -d
+# docker-compose down --rmi all -v
+# docker-compose build --no-cache rag-service [rebuild from scratch clearing the cache]
+
+services:
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - "5672:5672"
+      - "15672:15672"  # Management UI at http://localhost:15672
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASS}
+    healthcheck:
+      test: ["CMD", "rabbitmqctl", "status"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  rabbitmq-setup:
+    build:
+      context: .
+      dockerfile: setup-service/Dockerfile
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    environment:
+      - RABBITMQ_URL=${RABBITMQ_URL}
+    command: ["python", "rabbitmq_setup.py"]
+
+  weaviate:
+    command:
+    - --host
+    - 0.0.0.0
+    - --port
+    - '8080'
+    - --scheme
+    - http
+    image: cr.weaviate.io/semitechnologies/weaviate:1.31.0
+    ports:
+    - 8080:8080
+    - 50051:50051
+    volumes:
+    - weaviate_data:/var/lib/weaviate
+    restart: on-failure:0
+    environment:
+      QUERY_DEFAULTS_LIMIT: 25
+      AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED: 'true'
+      PERSISTENCE_DATA_PATH: '/var/lib/weaviate'
+      ENABLE_API_BASED_MODULES: 'true'
+      STUDIO_ENABLED: 'true'  
+      CLUSTER_HOSTNAME: 'node1'
+    # healthcheck:
+    #   test: ["CMD-SHELL", "wget --spider -q http://localhost:8080/v1/.well-known/ready || exit 1"]
+    #   interval: 10s
+    #   timeout: 5s
+    #   retries: 5
+    #   start_period: 10s
+
+  api-service:
+    build:
+      context: ./api-service
+    ports:
+      - "8000:8000"
+    environment:
+      - ENV=development
+      - RABBITMQ_URL=${RABBITMQ_URL}
+      - TEXT_PARSER_URL=${TEXT_PARSER_URL}
+      - OCR_SERVICE_URL=${OCR_SERVICE_URL}
+      - RAG_SERVICE_URL=${RAG_SERVICE_URL}
+    env_file:
+      - ./.env
+    volumes:
+      - ./api-service:/app
+    depends_on:
+      rabbitmq-setup:
+        condition: service_completed_successfully
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+  text-parser-service:
+    build:
+      context: ./text-parser-service
+    ports:
+      - "8001:8001"
+    environment:
+      - ENV=development
+      - RABBITMQ_URL=${RABBITMQ_URL}
+    volumes:
+      - ./text-parser-service:/app
+    depends_on:
+      rabbitmq-setup:
+        condition: service_completed_successfully
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8001 --reload
+
+  ingestion-service:
+    build:
+      context: ./ingestion-service
+    volumes:
+      - ./ingestion-service:/app
+    depends_on:
+      rabbitmq-setup:
+        condition: service_completed_successfully
+      # weaviate:
+      #   condition: service_healthy
+    environment:
+      - RABBITMQ_URL=${RABBITMQ_URL}
+      - WEAVIATE_URL=${WEAVIATE_URL}
+
+  rag-service:
+    build:
+      context: ./rag-service
+    ports:
+      - "8003:8003"
+    volumes:
+      - ./rag-service:/app
+    # depends_on:
+    #   weaviate:
+    #     condition: service_healthy
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8003 --reload
+    environment:
+      - WEAVIATE_URL=${WEAVIATE_URL}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+
+volumes:
+  weaviate_data:

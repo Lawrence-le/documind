@@ -1,0 +1,61 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pkl
+*.egg
+*.egg-info/
+dist/
+build/
+
+# Environments
+.env
+.venv/
+venv/
+env/
+ENV/
+*.env
+
+# IDEs and editors
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+*.log
+logs/
+*.out
+
+# OS-specific
+.DS_Store
+Thumbs.db
+
+# Docker
+*.pid
+*.seed
+*.cover
+docker-compose.override.yml
+
+# Coverage/testing
+.coverage
+htmlcov/
+.cache/
+.pytest_cache/
+nosetests.xml
+coverage.xml
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Node (if frontend included)
+node_modules/
+npm-debug.log
+yarn-debug.log
+yarn-error.log
+
+# Build artifacts
+*.tar.gz
+*.zip
+*.tgz
